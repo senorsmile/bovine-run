@@ -43,6 +43,7 @@ class CallbackModule(CallbackBase):
     #CALLBACK_TYPE = 'stdout'
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'json2'
+    CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
