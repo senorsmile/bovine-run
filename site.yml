@@ -1,0 +1,23 @@
+---
+- hosts: vagrant
+  gather_facts: False
+  #become: True
+  tasks:
+    - name: ls current dir
+      command: ls -alh
+
+    #- name: forceful exit 1
+    #  command: exit 1
+
+    - name: apt get update (NO BECOME)
+      apt:
+        update_cache: yes
+      ignore_errors: True
+
+- hosts: vagrant
+  gather_facts: False
+  become: True
+  tasks:
+    - name: apt get update
+      apt:
+        update_cache: yes
