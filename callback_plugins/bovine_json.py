@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import json
 import os
+from datetime import datetime
 
 from ansible.plugins.callback import CallbackBase
 
@@ -16,12 +17,14 @@ flush_results=True
 flush_results=False
 
 log_results=True
+logs_to_file=True
 
 default_json=True # default json blob at end of run
 default_json=False
 
 #output_file='./test.json'
 #f = open(output_file, 'a')
+
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
@@ -32,14 +35,34 @@ class CallbackModule(CallbackBase):
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
 
-        ## make sure our local log file directory exists
-        log_file_path='/.ansible/bovine/'
-        log_file_path = os.path.expanduser('~') + log_file_path
-        print("bovine log_file_path = " + log_file_path)
-        if not os.path.exists(log_file_path):
-            os.makedirs(log_file_path)
+        if logs_to_file:
+            # TODO: make log_file_path editable
+            ## defaults to $HOME/.ansible/bovine
+            log_file_path='/.ansible/bovine/'
+            log_file_path = os.path.expanduser('~') + log_file_path
+
+            print("bovine log_file_path = " + log_file_path)
+
+            ## make sure our local log file directory exists
+            if not os.path.exists(log_file_path):
+                print("bovine lot_file_path does not exist.  Creating...")
+                os.makedirs(log_file_path)
+
+            ## open file for writing
+            # TODO:
+            now = datetime.now()
+            now_str = now.strftime('%Y%m%d_%H%M%S')
+            log_file = log_file_path + "bovine_run_" + now_str
+
+            # open file in append mode
+            # 0=unbuffered, i.e. flush on every write
+            self.f = open(log_file, 'a', 0) 
 
         self.results = []
+
+    def write_log(self,output):
+        ## write output to log file
+        self.f.write(output + "\n")
 
     def _new_play(self, play):
         return {
@@ -65,14 +88,20 @@ class CallbackModule(CallbackBase):
             print("*** v2_runner_on_play_start")
             print("****** play=", play)
             print()
+
         elif flush_results or log_results:
-            self._display.display(
-                json.dumps(
-                    {"PLAY: START": str(play)}, 
-                    indent=4, 
-                    sort_keys=True
-                )
+            output = json.dumps(
+                {"PLAY: START": str(play)}, 
+                indent=4, 
+                sort_keys=True,
             )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             self.results.append(self._new_play(play))
 
@@ -83,8 +112,20 @@ class CallbackModule(CallbackBase):
             print("*** v2_playbook_on_task_start")
             print("****** task=", task)
             print()
+
         elif flush_results or log_results:
-            self._display.display(json.dumps({"TASK: START": str(task)}, indent=4, sort_keys=True))
+            output = json.dumps(
+                {"TASK: START": str(task)}, 
+                indent=4, 
+                sort_keys=True,
+            )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             self.results[-1]['tasks'].append(self._new_task(task))
 
@@ -105,19 +146,28 @@ class CallbackModule(CallbackBase):
             print("****** kwargs", kwargs)
             print()
         elif flush_results or log_results:
+            ## what does this do?
+            ## add comment once you figure it out
+            ## maybe we delete stdout, since stdout_lines is better?
             if 'stdout' in result._result:
                 del result._result['stdout']
-            self._display.display(
-                json.dumps(
-                    {
-                        "TASK: OK": {
-                            str(result._host): result._result,
-                        },
-                    }, 
-                    indent=4, 
-                    sort_keys=True,
-                )
+
+            output = json.dumps(
+                {
+                    "TASK: OK": {
+                        str(result._host): result._result,
+                    },
+                }, 
+                indent=4, 
+                sort_keys=True,
             )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             host = result._host
             self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
@@ -136,7 +186,7 @@ class CallbackModule(CallbackBase):
             print("****** dark stats=", stats.dark)
             print("****** custom stats=", stats.custom)
             print()
-        elif default_json:
+        elif default_json or flush_results or log_results:
             hosts = sorted(stats.processed.keys())
 
             summary = {}
@@ -144,13 +194,23 @@ class CallbackModule(CallbackBase):
                 s = stats.summarize(h)
                 summary[h] = s
 
-            output = {
-                'plays': self.results,
-                'stats': summary
-            }
+            output = json.dumps(
+                {
+                    "PLAY: ALL DONE": {
+                        'plays': self.results,
+                        'stats': summary
+                    }
+                },
+                indent=4, 
+                sort_keys=True,
+            )
 
-            self._display.display(json.dumps({"PLAY RECAP": {}}, indent=4, sort_keys=True))
-            self._display.display(json.dumps(output, indent=4, sort_keys=True))
+
+            if flush_results or default_json: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
 
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
@@ -159,20 +219,26 @@ class CallbackModule(CallbackBase):
             print("****** result._result=", result._result)
             print("****** result._task=", result._task)
             print()
+
         elif flush_results or log_results:
             if 'stdout' in result._result:
                 del result._result['stdout']
-            self._display.display(
-                json.dumps(
-                    {
-                        "TASK: FAILED": {
-                            str(result._host): result._result,
-                        }
-                    }, 
-                    indent=4, 
-                    sort_keys=True,
-                )
+            output = json.dumps(
+                {
+                    "TASK: FAILED": {
+                        str(result._host): result._result,
+                    }
+                }, 
+                indent=4, 
+                sort_keys=True,
             )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             host = result._host
             self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
@@ -183,20 +249,26 @@ class CallbackModule(CallbackBase):
             print("****** result._result=", result._result)
             print("****** result._task=", result._task)
             print()
+
         elif flush_results or log_results:
             if 'stdout' in result._result:
                 del result._result['stdout']
-            self._display.display(
-                json.dumps(
-                    {
-                        "TASK: NODE UNREACHABLE": {
-                            str(result._host): result._result,
-                        },
-                    }, 
-                    indent=4, 
-                    sort_keys=True,
-                )
+            output = json.dumps(
+                {
+                    "TASK: NODE UNREACHABLE": {
+                        str(result._host): result._result,
+                    },
+                }, 
+                indent=4, 
+                sort_keys=True,
             )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             host = result._host
             self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
@@ -211,20 +283,22 @@ class CallbackModule(CallbackBase):
         elif flush_results or log_results:
             if 'stdout' in result._result:
                 del result._result['stdout']
-            self._display.display(
-                json.dumps(
-                    {
-                        str(result._host): result._result,
-                    }, 
-                    indent=4, 
-                    sort_keys=True,
-                )
+
+            output = json.dumps(
+                {
+                    str(result._host): result._result,
+                }, 
+                indent=4, 
+                sort_keys=True,
             )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
         elif default_json:
             host = result._host
             self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
 
-
-    #v2_runner_on_failed = v2_runner_on_ok
-    #v2_runner_on_unreachable = v2_runner_on_ok
-    #v2_runner_on_skipped = v2_runner_on_ok
