@@ -104,3 +104,4 @@ ENV/
 *.pyc
 
 *.swp
+.vagrant/
