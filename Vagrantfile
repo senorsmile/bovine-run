@@ -1,8 +1,6 @@
 nodes = [
   { :hostname => 'test_server1', :ip => '192.168.71.2', :box => 'precise64', :forward => '2712', :ram => 256, },
   { :hostname => 'test_server2', :ip => '192.168.71.3', :box => 'precise64', :forward => '2713', :ram => 256, },
-  #{ :hostname => 'test_server3', :ip => '192.168.71.4', :box => 'precise64', :forward => '2714', :ram => 256, },
-  #{ :hostname => 'test_server4', :ip => '192.168.71.5', :box => 'precise64', :forward => '2715', :ram => 256, },
 ]
 
 Vagrant.configure("2") do |config|
