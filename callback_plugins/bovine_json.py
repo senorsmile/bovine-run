@@ -54,6 +54,8 @@ class CallbackModule(CallbackBase):
             now_str = now.strftime('%Y%m%d_%H%M%S')
             log_file = log_file_path + "bovine_run_" + now_str
 
+            print("bovine log_file = " + log_file)
+
             # open file in append mode
             # 0=unbuffered, i.e. flush on every write
             self.f = open(log_file, 'a', 0) 
@@ -82,6 +84,9 @@ class CallbackModule(CallbackBase):
             'hosts': {}
         }
 
+    #--------------------------------------
+    # play started
+    #--------------------------------------
     def v2_playbook_on_play_start(self, play):
 
         if debug:
@@ -91,9 +96,13 @@ class CallbackModule(CallbackBase):
 
         elif flush_results or log_results:
             output = json.dumps(
-                {"PLAY: START": str(play)}, 
+                { 
+                    "type": "PLAY START", 
+                    "name": play.name,
+                    "contents": str(play),
+                }, 
                 indent=4, 
-                sort_keys=True,
+                sort_keys=False,
             )
 
             if flush_results: 
@@ -106,6 +115,9 @@ class CallbackModule(CallbackBase):
             self.results.append(self._new_play(play))
 
 
+    #--------------------------------------
+    # task started
+    #--------------------------------------
     def v2_playbook_on_task_start(self, task, is_conditional):
 
         if debug:
@@ -115,9 +127,15 @@ class CallbackModule(CallbackBase):
 
         elif flush_results or log_results:
             output = json.dumps(
-                {"TASK: START": str(task)}, 
+                { 
+                    "type": "TASK START",
+                    "name": task.name,
+                    "contents": str(task),
+                    "id": str(task._uuid),
+                    "role": str(task._role),
+                }, 
                 indent=4, 
-                sort_keys=True,
+                sort_keys=False,
             )
 
             if flush_results: 
@@ -129,6 +147,9 @@ class CallbackModule(CallbackBase):
         elif default_json:
             self.results[-1]['tasks'].append(self._new_task(task))
 
+    #--------------------------------------
+    # task ok (per host)
+    #--------------------------------------
     def v2_runner_on_ok(self, result, **kwargs):
 
         if debug:
@@ -153,13 +174,14 @@ class CallbackModule(CallbackBase):
                 del result._result['stdout']
 
             output = json.dumps(
-                {
-                    "TASK: OK": {
-                        str(result._host): result._result,
-                    },
+                { 
+                    "type": "TASK OK", 
+                    "host": str(result._host),
+                    "name": result.task_name,
+                    "contents": result._result,
                 }, 
                 indent=4, 
-                sort_keys=True,
+                sort_keys=False,
             )
 
             if flush_results: 
@@ -172,6 +194,167 @@ class CallbackModule(CallbackBase):
             host = result._host
             self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
 
+    #--------------------------------------
+    # item ok
+    #--------------------------------------
+    def v2_runner_item_on_ok(self, result, **kwargs):
+        output = json.dumps(
+            { 
+                "type": "TASK ITEM OK", 
+                "host": str(result._host),
+                "contents": result._result,
+                "name": str(result.task_name),
+            }, 
+            indent=4, 
+            sort_keys=False,
+        )
+
+        self.write_log(output)
+
+    #--------------------------------------
+    # item failed
+    #--------------------------------------
+    def v2_runner_item_on_failed(self, result, **kwargs):
+        output = json.dumps(
+            { 
+                "type": "TASK ITEM FAILED", 
+                "host": str(result._host),
+                "name": str(result.task_name),
+                "contents": result._result,
+            }, 
+            indent=4, 
+            sort_keys=False,
+        )
+
+        self.write_log(output)
+
+    #--------------------------------------
+    # item skipped 
+    #--------------------------------------
+    def v2_runner_item_on_skipped(self, result, **kwargs):
+        output = json.dumps(
+            { 
+                "type": "TASK ITEM SKIPPED", 
+                "host": str(result._host),
+                "name": str(result.task_name),
+                "contents": result._result,
+            }, 
+            indent=4, 
+            sort_keys=False,
+        )
+
+        self.write_log(output)
+
+
+
+    #--------------------------------------
+    # failed
+    #--------------------------------------
+    def v2_runner_on_failed(self, result, ignore_errors=False):
+        if debug:
+            print("*** v2_runner_on_failed")
+            print("****** result._result=", result._result)
+            print("****** result._task=", result._task)
+            print()
+
+        elif flush_results or log_results:
+            if 'stdout' in result._result:
+                del result._result['stdout']
+
+            output = json.dumps(
+                { 
+                    "type": "TASK ITEM SKIPPED", 
+                    "host": str(result._host),
+                    "name": str(result.task_name),
+                    "contents": result._result,
+                }, 
+                indent=4, 
+                sort_keys=False,
+            )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
+        elif default_json:
+            host = result._host
+            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
+
+    #--------------------------------------
+    # unreachable
+    #--------------------------------------
+    def v2_runner_on_unreachable(self, result):
+        if debug:
+            print("*** v2_runner_on_unreachable")
+            print("****** result._result=", result._result)
+            print("****** result._task=", result._task)
+            print()
+
+        elif flush_results or log_results:
+            if 'stdout' in result._result:
+                del result._result['stdout']
+            output = json.dumps(
+                { 
+                    "type": "TASK ITEM SKIPPED", 
+                    "host": str(result._host),
+                    "name": str(result.task_name),
+                    "contents": result._result,
+                }, 
+                indent=4, 
+                sort_keys=False,
+            )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
+        elif default_json:
+            host = result._host
+            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
+
+
+    #--------------------------------------
+    # task skipped
+    #--------------------------------------
+    def v2_runner_on_skipped(self, result):
+        if debug:
+            print("*** v2_runner_on_skipped")
+            print("****** result._result=", result._result)
+            print("****** result._task=", result._task)
+            print()
+        elif flush_results or log_results:
+            if 'stdout' in result._result:
+                del result._result['stdout']
+
+            output = json.dumps(
+                { 
+                    "type": "TASK ITEM SKIPPED", 
+                    "host": str(result._host),
+                    "name": str(result.task_name),
+                    "contents": result._result,
+                }, 
+                indent=4, 
+                sort_keys=False,
+            )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
+        elif default_json:
+            host = result._host
+            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
+
+
+    #--------------------------------------
+    # end of all plays
+    #--------------------------------------
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
 
@@ -186,6 +369,7 @@ class CallbackModule(CallbackBase):
             print("****** dark stats=", stats.dark)
             print("****** custom stats=", stats.custom)
             print()
+
         elif default_json or flush_results or log_results:
             hosts = sorted(stats.processed.keys())
 
@@ -195,110 +379,20 @@ class CallbackModule(CallbackBase):
                 summary[h] = s
 
             output = json.dumps(
-                {
-                    "PLAY: ALL DONE": {
-                        'plays': self.results,
+                { 
+                    "type": "ALL PLAYS DONE", 
+                    "contents": {
+                        'plays': self.results, # this may do nothing?
                         'stats': summary
-                    }
-                },
+                    },
+                }, 
                 indent=4, 
-                sort_keys=True,
+                sort_keys=False,
             )
-
 
             if flush_results or default_json: 
                 self._display.display(output)
 
             if log_results:
                 self.write_log(output)
-
-
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-        if debug:
-            print("*** v2_runner_on_failed")
-            print("****** result._result=", result._result)
-            print("****** result._task=", result._task)
-            print()
-
-        elif flush_results or log_results:
-            if 'stdout' in result._result:
-                del result._result['stdout']
-            output = json.dumps(
-                {
-                    "TASK: FAILED": {
-                        str(result._host): result._result,
-                    }
-                }, 
-                indent=4, 
-                sort_keys=True,
-            )
-
-            if flush_results: 
-                self._display.display(output)
-
-            if log_results:
-                self.write_log(output)
-
-        elif default_json:
-            host = result._host
-            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
-
-    def v2_runner_on_unreachable(self, result):
-        if debug:
-            print("*** v2_runner_on_unreachable")
-            print("****** result._result=", result._result)
-            print("****** result._task=", result._task)
-            print()
-
-        elif flush_results or log_results:
-            if 'stdout' in result._result:
-                del result._result['stdout']
-            output = json.dumps(
-                {
-                    "TASK: NODE UNREACHABLE": {
-                        str(result._host): result._result,
-                    },
-                }, 
-                indent=4, 
-                sort_keys=True,
-            )
-
-            if flush_results: 
-                self._display.display(output)
-
-            if log_results:
-                self.write_log(output)
-
-        elif default_json:
-            host = result._host
-            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
-
-
-    def v2_runner_on_skipped(self, result):
-        if debug:
-            print("*** v2_runner_on_skipped")
-            print("****** result._result=", result._result)
-            print("****** result._task=", result._task)
-            print()
-        elif flush_results or log_results:
-            if 'stdout' in result._result:
-                del result._result['stdout']
-
-            output = json.dumps(
-                {
-                    str(result._host): result._result,
-                }, 
-                indent=4, 
-                sort_keys=True,
-            )
-
-            if flush_results: 
-                self._display.display(output)
-
-            if log_results:
-                self.write_log(output)
-
-        elif default_json:
-            host = result._host
-            self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
 
