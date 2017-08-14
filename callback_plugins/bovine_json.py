@@ -62,6 +62,10 @@ class CallbackModule(CallbackBase):
 
         self.results = []
 
+        ## set up vars to track which play and task we're in
+        self.playname = None
+        self.taskname = None
+
     def write_log(self,output):
         ## write output to log file
         self.f.write(output + "\n")
@@ -88,6 +92,7 @@ class CallbackModule(CallbackBase):
     # play started
     #--------------------------------------
     def v2_playbook_on_play_start(self, play):
+        self.playname = play.name
 
         if debug:
             print("*** v2_runner_on_play_start")
@@ -119,6 +124,7 @@ class CallbackModule(CallbackBase):
     # task started
     #--------------------------------------
     def v2_playbook_on_task_start(self, task, is_conditional):
+        self.taskname = task.name
 
         if debug:
             print("*** v2_playbook_on_task_start")
@@ -133,6 +139,7 @@ class CallbackModule(CallbackBase):
                     "contents": str(task),
                     "id": str(task._uuid),
                     "role": str(task._role),
+                    "play": playname,
                 }, 
                 indent=4, 
                 sort_keys=False,
@@ -179,6 +186,8 @@ class CallbackModule(CallbackBase):
                     "host": str(result._host),
                     "name": result.task_name,
                     "contents": result._result,
+                    "play": self.playname,
+                    "task": self.taskname,
                 }, 
                 indent=4, 
                 sort_keys=False,
@@ -204,6 +213,8 @@ class CallbackModule(CallbackBase):
                 "host": str(result._host),
                 "contents": result._result,
                 "name": str(result.task_name),
+                "play": self.playname,
+                "task": self.taskname,
             }, 
             indent=4, 
             sort_keys=False,
@@ -221,6 +232,8 @@ class CallbackModule(CallbackBase):
                 "host": str(result._host),
                 "name": str(result.task_name),
                 "contents": result._result,
+                "play": self.playname,
+                "task": self.taskname,
             }, 
             indent=4, 
             sort_keys=False,
@@ -238,6 +251,8 @@ class CallbackModule(CallbackBase):
                 "host": str(result._host),
                 "name": str(result.task_name),
                 "contents": result._result,
+                "play": self.playname,
+                "task": self.taskname,
             }, 
             indent=4, 
             sort_keys=False,
@@ -263,10 +278,12 @@ class CallbackModule(CallbackBase):
 
             output = json.dumps(
                 { 
-                    "type": "TASK ITEM SKIPPED", 
+                    "type": "TASK ITEM FAILED", 
                     "host": str(result._host),
                     "name": str(result.task_name),
                     "contents": result._result,
+                    "play": self.playname,
+                    "task": self.taskname,
                 }, 
                 indent=4, 
                 sort_keys=False,
@@ -297,10 +314,12 @@ class CallbackModule(CallbackBase):
                 del result._result['stdout']
             output = json.dumps(
                 { 
-                    "type": "TASK ITEM SKIPPED", 
+                    "type": "TASK ITEM - HOST UNREACHABLE", 
                     "host": str(result._host),
                     "name": str(result.task_name),
                     "contents": result._result,
+                    "play": self.playname,
+                    "task": self.taskname,
                 }, 
                 indent=4, 
                 sort_keys=False,
@@ -336,6 +355,8 @@ class CallbackModule(CallbackBase):
                     "host": str(result._host),
                     "name": str(result.task_name),
                     "contents": result._result,
+                    "play": self.playname,
+                    "task": self.taskname,
                 }, 
                 indent=4, 
                 sort_keys=False,
