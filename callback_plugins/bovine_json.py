@@ -139,7 +139,7 @@ class CallbackModule(CallbackBase):
                     "contents": str(task),
                     "id": str(task._uuid),
                     "role": str(task._role),
-                    "play": playname,
+                    "play": self.playname,
                 }, 
                 indent=4, 
                 sort_keys=False,
