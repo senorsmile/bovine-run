@@ -409,6 +409,9 @@ class CallbackModule(CallbackBase):
         self.end_time        =  datetime.now()
         self.end_time_str    =  self.end_time.strftime('%Y%m%d_%H%M%S')
         self.end_time_pretty =  self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+        self.job_length      =  self.start_time - self.end_time
+
         if debug:
             print("*** v2_playbook_on_stats")
             print("****** DIR stats=", dir(stats))
@@ -436,6 +439,7 @@ class CallbackModule(CallbackBase):
                         'plays': self.results, # this may do nothing?
                         'stats': summary,
                         'end_time': self.end_time_pretty,
+                        'job_length': self.job_length,
                     },
                 }, 
                 indent=4, 
