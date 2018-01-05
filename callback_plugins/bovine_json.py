@@ -410,7 +410,7 @@ class CallbackModule(CallbackBase):
         self.end_time_str    =  self.end_time.strftime('%Y%m%d_%H%M%S')
         self.end_time_pretty =  self.end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        self.job_length      =  self.start_time - self.end_time
+        self.job_length      =  self.end_time - self.start_time
 
         if debug:
             print("*** v2_playbook_on_stats")
