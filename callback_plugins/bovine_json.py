@@ -35,8 +35,9 @@ class CallbackModule(CallbackBase):
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
 
-        self.start_time =  datetime.now()
-        self.start_time_str =  self.start_time.strftime('%Y%m%d_%H%M%S')
+        self.start_time        =  datetime.now()
+        self.start_time_str    =  self.start_time.strftime('%Y%m%d_%H%M%S')
+        self.start_time_pretty =  self.start_time.strftime('%Y-%m-%d %H:%M:%S')
 
         if logs_to_file:
             # TODO: make log_file_path editable
@@ -78,7 +79,7 @@ class CallbackModule(CallbackBase):
                 { 
                     "type": "ANSIBLE START", 
                     "contents": {
-                        'start_time': self.start_time_str,
+                        'start_time': self.start_time_pretty,
                     },
                 }, 
                 indent=4, 
@@ -405,8 +406,9 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
 
-        self.end_time =  datetime.now()
-        self.end_time_str =  self.end_time.strftime('%Y%m%d_%H%M%S')
+        self.end_time        =  datetime.now()
+        self.end_time_str    =  self.end_time.strftime('%Y%m%d_%H%M%S')
+        self.end_time_pretty =  self.end_time.strftime('%Y-%m-%d %H:%M:%S')
         if debug:
             print("*** v2_playbook_on_stats")
             print("****** DIR stats=", dir(stats))
@@ -433,7 +435,7 @@ class CallbackModule(CallbackBase):
                     "contents": {
                         'plays': self.results, # this may do nothing?
                         'stats': summary,
-                        'end_time': self.end_time_str,
+                        'end_time': self.end_time_pretty,
                     },
                 }, 
                 indent=4, 
