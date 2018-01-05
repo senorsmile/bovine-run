@@ -439,7 +439,7 @@ class CallbackModule(CallbackBase):
                         'plays': self.results, # this may do nothing?
                         'stats': summary,
                         'end_time': self.end_time_pretty,
-                        'job_length': self.job_length,
+                        'job_length': str(self.job_length),
                     },
                 }, 
                 indent=4, 
