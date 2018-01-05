@@ -432,7 +432,7 @@ class CallbackModule(CallbackBase):
                     "type": "ALL PLAYS DONE", 
                     "contents": {
                         'plays': self.results, # this may do nothing?
-                        'stats': summary
+                        'stats': summary,
                         'end_time': self.end_time_str,
                     },
                 }, 
