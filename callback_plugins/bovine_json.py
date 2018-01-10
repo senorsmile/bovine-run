@@ -82,7 +82,7 @@ class CallbackModule(CallbackBase):
                         'start_time': self.start_time_pretty,
                     },
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -133,7 +133,7 @@ class CallbackModule(CallbackBase):
                     "name": play.name,
                     "contents": str(play),
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -168,7 +168,7 @@ class CallbackModule(CallbackBase):
                     "role": str(task._role),
                     "play": self.playname,
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -216,7 +216,7 @@ class CallbackModule(CallbackBase):
                     "play": self.playname,
                     "task": self.taskname,
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -243,7 +243,7 @@ class CallbackModule(CallbackBase):
                 "play": self.playname,
                 "task": self.taskname,
             }, 
-            indent=4, 
+            #indent=4, 
             sort_keys=False,
         )
 
@@ -262,7 +262,7 @@ class CallbackModule(CallbackBase):
                 "play": self.playname,
                 "task": self.taskname,
             }, 
-            indent=4, 
+            #indent=4, 
             sort_keys=False,
         )
 
@@ -281,7 +281,7 @@ class CallbackModule(CallbackBase):
                 "play": self.playname,
                 "task": self.taskname,
             }, 
-            indent=4, 
+            #indent=4, 
             sort_keys=False,
         )
 
@@ -312,7 +312,7 @@ class CallbackModule(CallbackBase):
                     "play": self.playname,
                     "task": self.taskname,
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -348,7 +348,7 @@ class CallbackModule(CallbackBase):
                     "play": self.playname,
                     "task": self.taskname,
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -385,7 +385,7 @@ class CallbackModule(CallbackBase):
                     "play": self.playname,
                     "task": self.taskname,
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
@@ -442,7 +442,7 @@ class CallbackModule(CallbackBase):
                         'job_length': str(self.job_length),
                     },
                 }, 
-                indent=4, 
+                #indent=4, 
                 sort_keys=False,
             )
 
