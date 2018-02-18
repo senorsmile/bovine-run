@@ -10,6 +10,8 @@ from datetime import datetime
 
 from ansible.plugins.callback import CallbackBase
 
+import socket
+
 debug=True
 debug=False
 
@@ -34,6 +36,10 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
+
+        # hostname of the controlling host
+        # i.e. where ansible is being run from
+        self.hostname = socket.gethostname()
 
         self.start_time        =  datetime.now()
         self.start_time_str    =  self.start_time.strftime('%Y%m%d_%H%M%S')
@@ -80,6 +86,7 @@ class CallbackModule(CallbackBase):
                     "type": "ANSIBLE START", 
                     "contents": {
                         'start_time': self.start_time_pretty,
+                        'controlling_host': self.hostname,
                     },
                 }, 
                 #indent=4, 
@@ -441,6 +448,7 @@ class CallbackModule(CallbackBase):
                         'stats': summary,
                         'end_time': self.end_time_pretty,
                         'job_length': str(self.job_length),
+                        'controlling_host': self.hostname,
                     },
                 }, 
                 #indent=4, 
