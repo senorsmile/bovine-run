@@ -132,6 +132,7 @@ class CallbackModule(CallbackBase):
                     "type": "PLAY START", 
                     "name": play.name,
                     "contents": str(play),
+                    "hosts": play.hosts,
                 }, 
                 #indent=4, 
                 sort_keys=False,
