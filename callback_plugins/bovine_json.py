@@ -122,6 +122,35 @@ class CallbackModule(CallbackBase):
             'hosts': {}
         }
 
+
+    def v2_playbook_on_start(self, playbook):
+        if debug:
+            print("*** v2_playbook_on_start")
+            print("****** playbook=", playbook)
+            print()
+
+        elif flush_results or log_results:
+            output = json.dumps(
+                { 
+                    "type": "ALL START?", 
+                    "str(playbook)": str(playbook),
+                    "dir(playbook)": dir(playbook),
+                    "playbook": playbook,
+                }, 
+                #indent=4, 
+                sort_keys=False,
+            )
+
+            if flush_results: 
+                self._display.display(output)
+
+            if log_results:
+                self.write_log(output)
+
+        elif default_json:
+            self.results.append(self._new_play(playbook))
+
+
     #--------------------------------------
     # play started
     #--------------------------------------
@@ -129,7 +158,7 @@ class CallbackModule(CallbackBase):
         self.playname = play.name
 
         if debug:
-            print("*** v2_runner_on_play_start")
+            print("*** v2_playbook_on_play_start")
             print("****** play=", play)
             print()
 
